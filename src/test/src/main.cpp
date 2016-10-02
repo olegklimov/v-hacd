@@ -114,7 +114,7 @@ struct Parameters {
 };
 bool LoadOFF(const string& fileName, vector<float>& points, vector<int>& triangles, IVHACD::IUserLogger& logger);
 bool LoadOBJ(const string& fileName, vector<float>& points, vector<int>& triangles, IVHACD::IUserLogger& logger);
-bool SaveOFF(const string& fileName, const float* const& points, const int* const& triangles, const unsigned int& nPoints,
+bool SaveOFF(const string& fileName, const double* points, const int* const& triangles, const unsigned int& nPoints,
     const unsigned int& nTriangles, IVHACD::IUserLogger& logger);
 bool SaveVRML2(ofstream& fout, const double* const& points, const int* const& triangles, const unsigned int& nPoints,
     const unsigned int& nTriangles, const Material& material, IVHACD::IUserLogger& logger);
@@ -233,7 +233,7 @@ int main(int argc, char* argv[])
             msg.str("");
             msg << "+ Generate output: " << nConvexHulls << " convex-hulls " << endl;
             myLogger.Log(msg.str().c_str());
-            ofstream foutCH(params.m_fileNameOut.c_str());
+            ofstream foutCH( (params.m_fileNameOut + ".vrml").c_str() );
             IVHACD::ConvexHull ch;
             if (foutCH.is_open()) {
                 Material mat;
@@ -241,6 +241,13 @@ int main(int argc, char* argv[])
                     interfaceVHACD->GetConvexHull(p, ch);
                     ComputeRandomColor(mat);
                     SaveVRML2(foutCH, ch.m_points, ch.m_triangles, ch.m_nPoints, ch.m_nTriangles, mat, myLogger);
+
+                    // modified here
+                    char silly_buffer[1024];
+                    sprintf(silly_buffer, "%s%02u.off", params.m_fileNameOut.c_str(), p);
+                    SaveOFF(silly_buffer, ch.m_points, ch.m_triangles, ch.m_nPoints, ch.m_nTriangles, myLogger);
+                    // /modified
+
                     msg.str("");
                     msg << "\t CH[" << setfill('0') << setw(5) << p << "] " << ch.m_nPoints << " V, " << ch.m_nTriangles << " T" << endl;
                     myLogger.Log(msg.str().c_str());
@@ -598,7 +605,7 @@ bool LoadOBJ(const string& fileName, vector<float>& points, vector<int>& triangl
     }
     return true;
 }
-bool SaveOFF(const string& fileName, const float* const& points, const int* const& triangles, const unsigned int& nPoints,
+bool SaveOFF(const string& fileName, const double* points, const int* const& triangles, const unsigned int& nPoints,
     const unsigned int& nTriangles, IVHACD::IUserLogger& logger)
 {
     ofstream fout(fileName.c_str());
